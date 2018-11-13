@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cmath>
+#include <vector>
 #include <time.h>
+
+#include "Timer.h"
 
 using namespace std;
 
@@ -8,7 +11,7 @@ int n_particle_per_cell = 100;
 int n_space = 2000;
 int nx = n_space+1;
 int n_particle = n_particle_per_cell * n_space;
-int n_timestep = 100;
+int n_timestep = 1000;
 double dt = 1.0e-12;
 double lx = 1.0e-2;
 double temperature = 20;
@@ -55,7 +58,13 @@ int main(int argc, char* argv[])
     double *rho;
     double *Ex;
 
-    double time_clock;
+    vector<Timer> timers;
+    timers.resize(5);
+    timers[0].init("total time");
+    timers[1].init("interpolation and push");
+    timers[2].init("boundary");
+    timers[3].init("projection");
+    timers[4].init("solver");
 
     x = new double[n_particle];
     vx = new double[n_particle];
@@ -111,18 +120,21 @@ int main(int argc, char* argv[])
     double xjn, xjmxi;
     int ip;
 
-    time_clock = clock();
+    timers[0].restart();
     for(int i_time = 0; i_time < n_timestep; i_time++)
     {
+        timers[1].restart();
         for(int i_particle = 0; i_particle < n_particle; i_particle++)
-        {
+        { 
             xjn = x[i_particle] * dx_inv;
             ip  = floor(xjn);
             xjmxi = xjn - (double)ip;
             Ex_local = Ex[ip] * xjmxi + Ex[ip+1] * xjn;
-
+            
             vx[i_particle] += charge_over_mass * Ex_local * dt;
             x[i_particle] += vx[i_particle] * dt;
+
+            /*
             if(x[i_particle] < 0.0)
             {
                 x[i_particle] = -x[i_particle];
@@ -131,6 +143,8 @@ int main(int argc, char* argv[])
             {
                 x[i_particle] =2.0 * lx - x[i_particle];
             }
+            */
+
 
             /*
             xjn = x[i_particle] * dx_inv;
@@ -140,7 +154,25 @@ int main(int argc, char* argv[])
             rho[ip+1] += xjn;
             */
         }
+        timers[1].update();
 
+        
+        timers[2].restart();
+        for(int i_particle = 0; i_particle < n_particle; i_particle++)
+        { 
+            if(x[i_particle] < 0.0)
+            {
+                x[i_particle] = -x[i_particle];
+            }
+            else if(x[i_particle] > lx)
+            {
+                x[i_particle] =2.0 * lx - x[i_particle];
+            }
+        }
+        timers[2].update();
+        
+
+        timers[3].restart();
         for(int i_particle = 0; i_particle < n_particle; i_particle++)
         {
             xjn = x[i_particle] * dx_inv;
@@ -149,12 +181,21 @@ int main(int argc, char* argv[])
             rho[ip] += xjmxi;
             rho[ip+1] += xjn;
         }
+        timers[3].update();
+        
 
+        timers[4].restart();
         solve_TDMA(rho, phi);
+        timers[4].update();
     }
-    time_clock = clock() - time_clock;
-    cout<<"time_clock: "<<time_clock<<endl;
+    timers[0].update();
 
+
+    for(int i = 0; i < timers.size(); i++)
+    {
+        timers[i].print();
+    }
+    
 }
 
 void solve_TDMA(double* rho, double* phi)
