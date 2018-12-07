@@ -1,11 +1,16 @@
 #include "Species.h"
+#include "InterpolatorFactory.h"
+#include "ProjectorFactory.h"
+#include "PusherFactory.h"
+#include "Interpolator1D1Order_test.h"
+#include "Projector1D1Order_test.h"
+#include "PusherBoris_test.h"
 
 #include "cmath"
 
 
 Species::Species(Parameters& params)
 {
-    dt = params.dt;
     q = params.q;
     m = params.m;
     n_particle = params.n_particle;
@@ -54,24 +59,19 @@ Species::Species(Parameters& params)
 void Species::dynamics(Parameters& params, double* Ex, double* rho)
 {
     double Ex_local;
-    double xjn, xjmxi;
-    int ip;
+
+    //Interpolator* interp    = InterpolatorFactory::create(params);
+    //Projector* proj           = ProjectorFactory::create(params);
+    //Pusher* push              = PusherFactory::create(params);
+    
+    Interpolator1D1Order_test *interp    = new Interpolator1D1Order_test(params);
+    Projector1D1Order_test *proj         = new Projector1D1Order_test(params);
+    PusherBoris_test *push               = new PusherBoris_test(params);
 
     for(int i_particle = 0; i_particle < n_particle; i_particle++)
     { 
-        /*
-        xjn = x[i_particle] * params.dx_inv;
-        ip  = floor(xjn);
-        xjmxi = xjn - (double)ip;
-        Ex_local = Ex[ip] * xjmxi + Ex[ip+1] * xjn;
-        
-        vx[i_particle] += charge_over_mass * Ex_local * params.dt;
-        x[i_particle] += vx[i_particle] * params.dt;
-        */
-
-        interpolator1D1Order(Ex, x, i_particle, Ex_local);
-        
-        pusherBoris_test(x, vx, i_particle, Ex_local);
+        (*interp) (Ex, x, i_particle, Ex_local);
+        (*push) (x, vx, i_particle, Ex_local);
 
     }
 
@@ -89,47 +89,6 @@ void Species::dynamics(Parameters& params, double* Ex, double* rho)
     
     for(int i_particle = 0; i_particle < n_particle; i_particle++)
     {
-        /*
-        xjn = x[i_particle] * params.dx_inv;
-        ip  = floor(xjn);
-        xjmxi = xjn - (double)ip;
-        rho[ip] += xjmxi;
-        rho[ip+1] += xjn;
-        */
-
-        projector1D1Order(rho, x, i_particle);
+        (*proj) (rho, x, i_particle);
     }
-}
-
-
-void Species::interpolator1D1Order(double *Ex, double *x, int ipart, double &Ex_local)
-{
-    double dx_inv;
-    double xjn, xjmxi;
-    int ip;
-
-    xjn = x[ipart] * dx_inv;
-    ip  = floor(xjn);
-    xjmxi = xjn - (double)ip;
-    Ex_local = Ex[ip] * xjmxi + Ex[ip+1] * xjn;
-}
-
-void Species::projector1D1Order(double *rho, double *x, int ipart)
-{
-    double dx_inv;
-    double xjn, xjmxi;
-    int ip;
-
-    xjn = x[ipart] * dx_inv;
-    ip  = floor(xjn);
-    xjmxi = xjn - (double)ip;
-    rho[ip] += xjmxi;
-    rho[ip+1] += xjn;
-} 
-
-
-void Species::pusherBoris_test(double *x, double *vx, int ipart, double &Ex_local)
-{
-    vx[ipart] += charge_over_mass * Ex_local * dt;
-    x[ipart] += vx[ipart] * dt;
 }
