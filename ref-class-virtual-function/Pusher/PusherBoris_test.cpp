@@ -18,9 +18,8 @@ PusherBoris_test::~PusherBoris_test()
 {
 }
 
-/***********************************************************************
-	Only electric field -- leap-frog (Boris) scheme
-***********************************************************************/
+
+// Only electric field -- leap-frog (Boris) scheme
 void PusherBoris_test::operator() (double *x, double *vx, int ipart, double &Ex_local)
 {
     vx[ipart] += charge_over_mass * Ex_local * dt;

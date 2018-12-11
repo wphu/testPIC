@@ -54,19 +54,21 @@ Species::Species(Parameters& params)
         x2 = (double)rand() / RAND_MAX;
         vz[i] = vt * sqrt( -log(x1) ) * sin(2.0 * M_PI * x2);
     }
+
+    //interp            = InterpolatorFactory::create(params);
+    //proj              = ProjectorFactory::create(params);
+    //push              = PusherFactory::create(params);
+    
+    interp              = new Interpolator1D1Order_test(params);
+    proj                = new Projector1D1Order_test(params);
+    push                = new PusherBoris_test(params);
+
+
 }
 
 void Species::dynamics(Parameters& params, double* Ex, double* rho)
 {
     double Ex_local;
-
-    //Interpolator* interp    = InterpolatorFactory::create(params);
-    //Projector* proj           = ProjectorFactory::create(params);
-    //Pusher* push              = PusherFactory::create(params);
-    
-    Interpolator1D1Order_test *interp    = new Interpolator1D1Order_test(params);
-    Projector1D1Order_test *proj         = new Projector1D1Order_test(params);
-    PusherBoris_test *push               = new PusherBoris_test(params);
 
     for(int i_particle = 0; i_particle < n_particle; i_particle++)
     { 

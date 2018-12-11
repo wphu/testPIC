@@ -69,9 +69,9 @@ void Species::dynamics(Parameters& params, double* Ex, double* rho)
         x[i_particle] += vx[i_particle] * params.dt;
         */
 
-        interpolator1D1Order(Ex, x, i_particle, Ex_local);
+        interpolator1D1Order(Ex, i_particle, Ex_local);
         
-        pusherBoris_test(x, vx, i_particle, Ex_local);
+        pusherBoris_test(i_particle, Ex_local);
 
     }
 
@@ -97,12 +97,12 @@ void Species::dynamics(Parameters& params, double* Ex, double* rho)
         rho[ip+1] += xjn;
         */
 
-        projector1D1Order(rho, x, i_particle);
+        projector1D1Order(rho, i_particle);
     }
 }
 
 
-void Species::interpolator1D1Order(double *Ex, double *x, int ipart, double &Ex_local)
+void Species::interpolator1D1Order(double *Ex, int ipart, double &Ex_local)
 {
     double dx_inv;
     double xjn, xjmxi;
@@ -114,7 +114,7 @@ void Species::interpolator1D1Order(double *Ex, double *x, int ipart, double &Ex_
     Ex_local = Ex[ip] * xjmxi + Ex[ip+1] * xjn;
 }
 
-void Species::projector1D1Order(double *rho, double *x, int ipart)
+void Species::projector1D1Order(double *rho, int ipart)
 {
     double dx_inv;
     double xjn, xjmxi;
@@ -128,7 +128,7 @@ void Species::projector1D1Order(double *rho, double *x, int ipart)
 } 
 
 
-void Species::pusherBoris_test(double *x, double *vx, int ipart, double &Ex_local)
+void Species::pusherBoris_test(int ipart, double &Ex_local)
 {
     vx[ipart] += charge_over_mass * Ex_local * dt;
     x[ipart] += vx[ipart] * dt;

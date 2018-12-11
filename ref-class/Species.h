@@ -9,9 +9,9 @@ public:
     Species(Parameters& params);
 
     void dynamics(Parameters& params, double* Ex, double* rho);
-    void interpolator1D1Order(double *Ex, double *x, int ipart, double &Ex_local);
-    void projector1D1Order(double *rho, double *x, int ipart);
-    void pusherBoris_test(double *x, double *vx, int ipart, double &Ex_local);
+    void interpolator1D1Order(double *Ex, int ipart, double &Ex_local);
+    void projector1D1Order(double *rho, int ipart);
+    void pusherBoris_test(int ipart, double &Ex_local);
 
     double *x;
     double *vx;

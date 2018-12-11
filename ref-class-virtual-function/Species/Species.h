@@ -2,6 +2,12 @@
 #define SPECIES_H
 
 #include "Parameters.h"
+#include "InterpolatorFactory.h"
+#include "ProjectorFactory.h"
+#include "PusherFactory.h"
+#include "Interpolator1D1Order_test.h"
+#include "Projector1D1Order_test.h"
+#include "PusherBoris_test.h"
 
 class Species
 {
@@ -22,6 +28,15 @@ private:
     double m;
     double const_e = 1.6021766208e-19;
     double charge_over_mass;
+
+    //Interpolator* interp;
+    //Projector* proj;
+    //Pusher* push;
+    
+    Interpolator1D1Order_test *interp;
+    Projector1D1Order_test *proj;
+    PusherBoris_test *push;
+
 };
 
 
