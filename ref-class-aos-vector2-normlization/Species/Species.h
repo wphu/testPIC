@@ -42,6 +42,7 @@ public:
 
     vector< vector<Particle> > particles;
     vector< vector<int> > list_removed_particles;
+    vector<int> n_particle_in_cell;
 
     int n_particle;
     int n_space;
@@ -60,6 +61,7 @@ private:
     double dt_over_dx;
     int timestep_sort;
     int i_timestep_sort;
+
 };
 
 

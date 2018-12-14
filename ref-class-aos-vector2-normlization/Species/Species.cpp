@@ -24,12 +24,14 @@ Species::Species(Parameters& params)
     timestep_sort = 100;
     i_timestep_sort = 0;
 
-    particles.resize(params.n_space);
-    list_removed_particles.resize(params.n_space);
-    for(int i = 0; i < params.n_space; i++)
+    particles.resize(n_space);
+    list_removed_particles.resize(n_space);
+    n_particle_in_cell.resize(n_space);
+    for(int i = 0; i < n_space; i++)
     {
         particles[i].reserve(1.5 * params.n_particle_per_cell);
         particles[i].resize(params.n_particle_per_cell);
+        n_particle_in_cell[i] = params.n_particle_per_cell;
     }
 
     for(int i_space = 0; i_space < params.n_space; i_space++)
@@ -85,9 +87,9 @@ void Species::dynamics(Parameters& params, double* Ex, double* rho)
     B_local.z = 1.0;
 
     //cout<<"1111 "<<endl;
-    for(int i_space = 0; i_space < params.n_space; i_space++)
+    for(int i_space = 0; i_space < n_space; i_space++)
     {
-        for(int i_particle = 0; i_particle < particles[i_space].size(); i_particle++)
+        for(int i_particle = 0; i_particle < n_particle_in_cell[i_space]; i_particle++)
         { 
             interpolator1D1Order(Ex,i_space, i_particle, E_local);
             
@@ -102,9 +104,9 @@ void Species::dynamics(Parameters& params, double* Ex, double* rho)
     sort_particles();
 
     //cout<<"3333 "<<endl;
-    for(int i_space = 0; i_space < params.n_space; i_space++)
+    for(int i_space = 0; i_space < n_space; i_space++)
     {
-        for(int i_particle = 0; i_particle < particles[i_space].size(); i_particle++)
+        for(int i_particle = 0; i_particle < n_particle_in_cell[i_space]; i_particle++)
         { 
             projector1D1Order(rho, i_space, i_particle);
         }
@@ -138,7 +140,7 @@ void Species::pusherBoris(int i_space, int i_particle, LocalFields &E_local)
 
 void Species::pusherBoris(int i_space, int i_particle, LocalFields &E_local, LocalFields &B_local)
 {
-    //double charge_over_mass_ = static_cast<double>(particles.charge(ipart))*one_over_mass_;
+    // for pushBoris with magnetic field
     double umx, umy, umz, upx, upy, upz, pxdot, pydot, pzdot;
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2, Sx, Sy, Sz;
     double TxTy, TyTz, TzTx;
@@ -154,6 +156,7 @@ void Species::pusherBoris(int i_space, int i_particle, LocalFields &E_local, Loc
     umy = particles[i_space][i_particle].vy + charge_over_mass * E_local.y * dts2;
     umz = particles[i_space][i_particle].vz + charge_over_mass * E_local.z * dts2;
 
+
     // Rotation in the magnetic field
     alpha = charge_over_mass * dts2;
     Tx    = alpha * B_local.x;
@@ -167,6 +170,7 @@ void Species::pusherBoris(int i_space, int i_particle, LocalFields &E_local, Loc
     Sy    = Ty * inv_det_T;
     Sz    = Tz * inv_det_T;
 
+
     pxdot = umx + umy * Tz - umz * Ty;
     pydot = umy + umz * Tx - umx * Tz;
     pzdot = umz + umx * Ty - umy * Tx;
@@ -174,6 +178,7 @@ void Species::pusherBoris(int i_space, int i_particle, LocalFields &E_local, Loc
     upx = umx + pydot * Sz - pzdot * Sy;
     upy = umy + pzdot * Sx - pxdot * Sz;
     upz = umz + pxdot * Sy - pydot * Sx;
+
 
     // Half-acceleration in the electric field
     pxsm = upx + charge_over_mass * E_local.x * dts2;
@@ -202,7 +207,7 @@ void Species::sort_particles()
     //cout<<"aaa"<<endl;
     for(int i_space = 0; i_space < n_space_check_boundary; i_space++)
     {
-        for(int i_particle = 0; i_particle < particles[i_space].size(); i_particle++)
+        for(int i_particle = 0; i_particle < n_particle_in_cell[i_space]; i_particle++)
         {
             i_space_change =  floor(particles[i_space][i_particle].x);
 
@@ -213,9 +218,9 @@ void Species::sort_particles()
         }
     }
     //cout<<"bbb"<<endl;
-    for(int i_space = particles.size() - n_space_check_boundary; i_space < particles.size(); i_space++)
+    for(int i_space = n_space - n_space_check_boundary; i_space < n_space; i_space++)
     {
-        for(int i_particle = 0; i_particle < particles[i_space].size(); i_particle++)
+        for(int i_particle = 0; i_particle < n_particle_in_cell[i_space]; i_particle++)
         {
             i_space_change =  floor(particles[i_space][i_particle].x);
 
@@ -227,9 +232,9 @@ void Species::sort_particles()
     }
 
     //cout<<"ccc"<<endl;
-    for(int i_space = 0; i_space < particles.size(); i_space++)
+    for(int i_space = 0; i_space < n_space; i_space++)
     {
-        for(int i_particle = 0; i_particle < particles[i_space].size(); i_particle++)
+        for(int i_particle = 0; i_particle < n_particle_in_cell[i_space]; i_particle++)
         {
             i_space_change =  floor(particles[i_space][i_particle].x);
 
@@ -242,7 +247,7 @@ void Species::sort_particles()
         }
     }
     //cout<<"ddd"<<endl;
-    for(int i_space = 0; i_space < particles.size(); i_space++)
+    for(int i_space = 0; i_space < n_space; i_space++)
     {
         int i_particle_last = particles[i_space].size() - 1;
         for(int i_list = 0; i_list < list_removed_particles[i_space].size(); i_list++)
@@ -259,6 +264,7 @@ void Species::sort_particles()
             }
         }
         particles[i_space].resize(particles[i_space].size() - list_removed_particles[i_space].size());
+        n_particle_in_cell[i_space] =  particles[i_space].size();
         list_removed_particles[i_space].clear();
     } 
     //cout<<"eee"<<endl;
